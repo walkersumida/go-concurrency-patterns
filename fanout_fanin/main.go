@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func Fanout[T any](ctx context.Context, source <-chan T, n int, worker func(context.Context, T) T) []<-chan T {
+func Fanout[T any](ctx context.Context, channel <-chan T, n int, worker func(context.Context, T) T) []<-chan T {
 	out := make([]<-chan T, 0, n)
 
 	for i := 0; i < n; i++ {
@@ -16,12 +16,12 @@ func Fanout[T any](ctx context.Context, source <-chan T, n int, worker func(cont
 
 		go func() {
 			defer close(ch)
-			for val := range source {
+			for c := range channel {
 				select {
 				case <-ctx.Done():
 					return
 				default:
-					ch <- worker(ctx, val)
+					ch <- worker(ctx, c)
 				}
 			}
 		}()
@@ -74,16 +74,16 @@ func main() {
 	}
 	close(jobCh)
 
-	worker := func(ctx context.Context, r Job) Job {
+	worker := func(ctx context.Context, job Job) Job {
 		time.Sleep(1 * time.Second) // heavy processing
-		if r.Input == 5 {
+		if job.Input == 5 {
 			// cancel() // uncomment this to cancel the process
-			r.Err = fmt.Errorf("error occurred")
-			return r
+			job.Err = fmt.Errorf("error occurred")
+			return job
 		}
 
-		r.Result = r.Input * 2
-		return r
+		job.Result = job.Input * 2
+		return job
 	}
 
 	// Fan-out
