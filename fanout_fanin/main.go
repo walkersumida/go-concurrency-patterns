@@ -68,11 +68,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	jobChs := make(chan Job, 10)
+	jobCh := make(chan Job, 10)
 	for i := 0; i < 10; i++ {
-		jobChs <- Job{ID: i}
+		jobCh <- Job{ID: i}
 	}
-	close(jobChs)
+	close(jobCh)
 
 	worker := func(ctx context.Context, r Job) Job {
 		time.Sleep(1 * time.Second) // heavy processing
@@ -87,7 +87,7 @@ func main() {
 	}
 
 	// Fan-out
-	outputChs := Fanout(ctx, jobChs, 3, worker)
+	outputChs := Fanout(ctx, jobCh, 3, worker)
 
 	// Fan-in
 	result := Fanin(ctx, outputChs)
