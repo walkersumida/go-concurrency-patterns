@@ -57,7 +57,7 @@ func Fanin[T any](ctx context.Context, channels []<-chan T) <-chan T {
 }
 
 type Job struct {
-	ID     int
+	Input  int
 	Result int
 	Err    error
 }
@@ -70,19 +70,19 @@ func main() {
 
 	jobCh := make(chan Job, 10)
 	for i := 0; i < 10; i++ {
-		jobCh <- Job{ID: i}
+		jobCh <- Job{Input: i}
 	}
 	close(jobCh)
 
 	worker := func(ctx context.Context, r Job) Job {
 		time.Sleep(1 * time.Second) // heavy processing
-		if r.ID == 5 {
+		if r.Input == 5 {
 			// cancel() // uncomment this to cancel the process
 			r.Err = fmt.Errorf("error occurred")
 			return r
 		}
 
-		r.Result = r.ID * 2
+		r.Result = r.Input * 2
 		return r
 	}
 
